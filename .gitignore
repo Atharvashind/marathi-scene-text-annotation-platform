@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+dist/
+*.db
+backend/images/
+
+# Temp / debug files created during development
+check_ocr.py
+check_confidence.py
+check_confidence2.py
+check_confidence3.py
+ocr_output.txt
+detect_output.txt
+
+# Node
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# Env
+.env.local
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IndicPhotoOCR repo (installed separately, not part of this project)
+IndicPhotoOCR/
