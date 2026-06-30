@@ -65,9 +65,11 @@ async def run_ocr(image_id: int, db: AsyncSession) -> List[AnnotationResponse]:
             detail=f"OCR engine error: {exc}",
         )
 
-    # Bulk-insert annotation rows
+    # Bulk-insert annotation rows — use auto-detected label from OCR
+    VALID_LABELS = {"Marathi", "English", "Numeric", "Mixed", "Logo"}
     annotations: list[Annotation] = []
     for r in ocr_results:
+        label = r.label if r.label in VALID_LABELS else "Marathi"
         ann = Annotation(
             image_id=image_id,
             x1=r.x1,
@@ -75,7 +77,7 @@ async def run_ocr(image_id: int, db: AsyncSession) -> List[AnnotationResponse]:
             x2=r.x2,
             y2=r.y2,
             text=r.text,
-            label="Marathi",
+            label=label,
             confidence=r.confidence,
             accepted=False,
             ocr_generated=True,

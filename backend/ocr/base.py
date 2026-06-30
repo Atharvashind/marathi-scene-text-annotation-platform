@@ -11,6 +11,7 @@ class OCRResult:
     x2: float
     y2: float
     confidence: float  # in [0.0, 1.0]
+    label: str = "Marathi"  # auto-detected script label
 
 
 class BaseOCRAdapter(ABC):
