@@ -1,6 +1,5 @@
 import io
 import os
-import shutil
 from pathlib import Path
 from typing import List, Tuple
 import magic
@@ -37,10 +36,8 @@ async def upload_images(
 
     for file in files:
         try:
-            # Read file bytes
             data = await file.read()
 
-            # Check file size
             max_bytes = MAX_FILE_SIZE_MB * 1024 * 1024
             if len(data) > max_bytes:
                 results.append(UploadFileResult(
@@ -50,7 +47,6 @@ async def upload_images(
                 ))
                 continue
 
-            # Validate MIME type
             is_valid, mime_type = validate_mime_type(data)
             if not is_valid:
                 results.append(UploadFileResult(
@@ -60,14 +56,11 @@ async def upload_images(
                 ))
                 continue
 
-            # Read image dimensions
             with PILImage.open(io.BytesIO(data)) as img:
                 width, height = img.size
 
-            # Save to IMAGES_DIR
             safe_name = Path(file.filename).name if file.filename else "image"
             dest_path = IMAGES_DIR / safe_name
-            # Avoid collisions
             counter = 1
             while dest_path.exists():
                 stem = Path(safe_name).stem
@@ -78,7 +71,6 @@ async def upload_images(
             with open(dest_path, "wb") as f:
                 f.write(data)
 
-            # Persist DB record
             image = Image(
                 filename=safe_name,
                 filepath=str(dest_path),
@@ -121,6 +113,28 @@ async def get_image(image_id: int, db: AsyncSession) -> Image:
     return image
 
 
+async def delete_image(image_id: int, db: AsyncSession) -> None:
+    """Delete an image, all its annotations, and the file on disk."""
+    from sqlalchemy import delete as sql_delete
+    from backend.models import Annotation
+
+    image = await get_image(image_id, db)
+
+    # Delete all annotations for this image
+    await db.execute(sql_delete(Annotation).where(Annotation.image_id == image_id))
+
+    # Delete the file from disk (non-blocking if missing)
+    try:
+        if image.filepath and Path(image.filepath).exists():
+            Path(image.filepath).unlink()
+    except Exception:
+        pass
+
+    # Delete the DB record
+    await db.delete(image)
+    await db.commit()
+
+
 async def update_image_status(
     image_id: int, new_status: str, db: AsyncSession
 ) -> Image:
@@ -139,7 +153,6 @@ async def update_image_status(
     await db.commit()
     await db.refresh(image)
 
-    # Publish SSE events to connected clients
     from backend.routers.events import publish_event
     publish_event("status_changed", {"image_id": image_id, "status": new_status})
     if new_status == "Approved":

@@ -67,6 +67,16 @@ export async function runOCR(imageId: number): Promise<Annotation[]> {
   return request<Annotation[]>(`/api/ocr/${imageId}`, { method: 'POST' });
 }
 
+export async function deleteImage(imageId: number): Promise<void> {
+  return request<void>(`/api/images/${imageId}`, { method: 'DELETE' });
+}
+
+export async function runBatchOCR(): Promise<{ queued: number; message: string }> {
+  return request<{ queued: number; message: string }>('/api/ocr/batch/all', {
+    method: 'POST',
+  });
+}
+
 // ── Annotations ────────────────────────────────────────────────────────────────
 
 export async function fetchAnnotations(imageId: number): Promise<Annotation[]> {
