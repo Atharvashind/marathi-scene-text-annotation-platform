@@ -33,6 +33,7 @@ export default function ImageGallery() {
     es.onmessage = (e) => {
       try {
         const event = JSON.parse(e.data);
+        // Only refresh gallery list for status changes — don't touch canvas queries
         if (['status_changed', 'ocr_completed', 'image_approved',
              'batch_ocr_progress', 'batch_ocr_finished', 'batch_ocr_image_failed']
             .includes(event.type)) {

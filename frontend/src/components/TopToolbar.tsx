@@ -31,7 +31,7 @@ export default function TopToolbar() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  // SSE listener for batch OCR progress
+  // SSE listener for batch OCR progress — only invalidate image list, NOT the canvas queries
   useEffect(() => {
     const es = new EventSource(`${API_BASE}/api/events`);
     es.onmessage = (e) => {
@@ -41,7 +41,13 @@ export default function TopToolbar() {
           setBatch({ completed: 0, failed: 0, total: event.total, running: true });
         } else if (event.type === 'batch_ocr_progress') {
           setBatch({ completed: event.completed, failed: event.failed, total: event.total, running: true });
+          // Only refresh the image LIST (gallery badges) — not the canvas or annotations
           queryClient.invalidateQueries({ queryKey: ['images'] });
+          // If the completed image is currently selected, also refresh its data
+          if (event.image_id === selectedImageId) {
+            queryClient.invalidateQueries({ queryKey: ['image', selectedImageId] });
+            queryClient.invalidateQueries({ queryKey: ['annotations', selectedImageId] });
+          }
         } else if (event.type === 'batch_ocr_image_failed') {
           setBatch({ completed: event.completed, failed: event.failed, total: event.total, running: true });
         } else if (event.type === 'batch_ocr_finished') {
@@ -56,7 +62,7 @@ export default function TopToolbar() {
       } catch { /* ignore */ }
     };
     return () => es.close();
-  }, [queryClient]);
+  }, [queryClient, selectedImageId]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);

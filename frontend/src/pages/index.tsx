@@ -60,12 +60,13 @@ export default function Home() {
     queryClient.invalidateQueries({ queryKey: ['images'] });
   }, [image, queryClient]);
 
-  // React to image status changes — auto-transition and refetch annotations
+  // React to image status changes — auto-transition OCR_Completed → Under_Review
+  // Only trigger when the SELECTED image changes status, not during batch OCR of other images
   useEffect(() => {
-    if (image?.status === 'OCR_Completed') {
+    if (image?.status === 'OCR_Completed' && image?.id === selectedImageId) {
       handleImageOpen();
     }
-  }, [image?.status, handleImageOpen]);
+  }, [image?.status, image?.id, selectedImageId, handleImageOpen]);
 
   const handleAnnotationCreate = useCallback(
     async (data: AnnotationCreate) => {
