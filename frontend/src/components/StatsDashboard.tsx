@@ -4,8 +4,9 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchImageMetrics, fetchProjectMetrics } from '@/lib/api';
 
 interface Props {
-  imageId: number | null;
+  imageId: string | null;
   onClose: () => void;
+  projectId?: string;
 }
 
 function Metric({ label, value }: { label: string; value: string | number | null }) {
@@ -29,16 +30,17 @@ function secs(v: number | null) {
   return `${v.toFixed(0)}s`;
 }
 
-export default function StatsDashboard({ imageId, onClose }: Props) {
+export default function StatsDashboard({ imageId, onClose, projectId }: Props) {
   const { data: projectMetrics } = useQuery({
-    queryKey: ['metrics', 'project'],
-    queryFn: fetchProjectMetrics,
+    queryKey: ['metrics', 'project', projectId],
+    queryFn: () => fetchProjectMetrics(projectId!),
+    enabled: !!projectId,
   });
 
   const { data: imageMetrics } = useQuery({
-    queryKey: ['metrics', 'image', imageId],
-    queryFn: () => fetchImageMetrics(imageId!),
-    enabled: imageId !== null,
+    queryKey: ['metrics', 'image', projectId, imageId],
+    queryFn: () => fetchImageMetrics(projectId!, imageId!),
+    enabled: !!projectId && !!imageId,
   });
 
   return (

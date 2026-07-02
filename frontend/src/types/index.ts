@@ -3,9 +3,10 @@
 export type AnnotationStatus = 'Uploaded' | 'OCR_Completed' | 'Under_Review' | 'Approved';
 
 export interface ImageRecord {
-  id: number;
+  id: string;
+  project_id: string;
   filename: string;
-  filepath: string;
+  storage_key: string;
   width: number;
   height: number;
   status: AnnotationStatus;
@@ -18,8 +19,8 @@ export interface ImageRecord {
 export type LabelType = 'Marathi' | 'English' | 'Numeric' | 'Mixed' | 'Logo';
 
 export interface Annotation {
-  id: number;
-  image_id: number;
+  id: string;
+  image_id: string;
   x1: number;
   y1: number;
   x2: number;
@@ -65,7 +66,7 @@ export interface UploadFileResult {
 // ── Metrics types ──────────────────────────────────────────────────────────────
 
 export interface ImageMetrics {
-  image_id: number;
+  image_id: string;
   aar: number | null;
   bcr: number | null;
   mar: number | null;

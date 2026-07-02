@@ -1,26 +1,7 @@
+import uuid
 from datetime import datetime
-from typing import Optional, List, Literal
+from typing import Optional, Literal
 from pydantic import BaseModel, Field
-
-
-# ── Image schemas ──────────────────────────────────────────────────────────────
-
-class ImageResponse(BaseModel):
-    id: int
-    filename: str
-    filepath: str
-    width: int
-    height: int
-    status: str
-    upload_date: datetime
-    approved_at: Optional[datetime] = None
-
-    model_config = {"from_attributes": True}
-
-
-class ImageStatusUpdate(BaseModel):
-    status: Literal["Uploaded", "OCR_Completed", "Under_Review", "Approved"]
-
 
 # ── Annotation schemas ─────────────────────────────────────────────────────────
 
@@ -40,7 +21,6 @@ class AnnotationUpdate(BaseModel):
     text: Optional[str] = None
     label: Optional[LabelType] = None
     accepted: Optional[bool] = None
-    # Bounding box coordinate updates (used when drag/resize occurs on canvas)
     x1: Optional[float] = Field(None, ge=0)
     y1: Optional[float] = Field(None, ge=0)
     x2: Optional[float] = Field(None, ge=0)
@@ -48,8 +28,8 @@ class AnnotationUpdate(BaseModel):
 
 
 class AnnotationResponse(BaseModel):
-    id: int
-    image_id: int
+    id: uuid.UUID
+    image_id: uuid.UUID
     x1: float
     y1: float
     x2: float
@@ -66,27 +46,18 @@ class AnnotationResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-# ── Upload result ──────────────────────────────────────────────────────────────
-
-class UploadFileResult(BaseModel):
-    filename: str
-    success: bool
-    image: Optional[ImageResponse] = None
-    error: Optional[str] = None
-
-
 # ── Metrics schemas ────────────────────────────────────────────────────────────
 
 class MetricsResponse(BaseModel):
-    image_id: int
-    aar: Optional[float] = None   # null when no OCR annotations
+    image_id: uuid.UUID
+    aar: Optional[float] = None
     bcr: Optional[float] = None
     mar: Optional[float] = None
-    tse: Optional[float] = None   # seconds saved
+    tse: Optional[float] = None
     total_ocr: int = 0
     total_annotations: int = 0
-    high_confidence_count: int = 0   # confidence > 0.95
-    low_confidence_count: int = 0    # confidence < 0.80
+    high_confidence_count: int = 0
+    low_confidence_count: int = 0
 
 
 class ProjectMetricsResponse(BaseModel):

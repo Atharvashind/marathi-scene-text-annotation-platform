@@ -17,11 +17,12 @@ const CONFIDENCE_FILTERS = [
 
 interface Props {
   annotations: Annotation[];
-  selectedImageId: number | null;
+  selectedImageId: string | null;
   isLocked?: boolean;
+  projectId?: string;
 }
 
-export default function AnnotationPanel({ annotations, selectedImageId, isLocked = false }: Props) {
+export default function AnnotationPanel({ annotations, selectedImageId, isLocked = false, projectId }: Props) {
   const queryClient = useQueryClient();
   const {
     selectedAnnotationId,
@@ -43,30 +44,30 @@ export default function AnnotationPanel({ annotations, selectedImageId, isLocked
   }, [selected?.id]);
 
   const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: ['annotations', selectedImageId] });
+    queryClient.invalidateQueries({ queryKey: ['annotations', projectId, selectedImageId] });
 
   const handleTextCommit = async () => {
-    if (!selected || text === selected.text) return;
-    await updateAnnotation(selected.id, { text });
+    if (!selected || text === selected.text || !projectId) return;
+    await updateAnnotation(projectId, selected.id, { text });
     invalidate();
   };
 
   const handleLabelChange = async (newLabel: LabelType) => {
     setLabel(newLabel);
-    if (!selected) return;
-    await updateAnnotation(selected.id, { label: newLabel });
+    if (!selected || !projectId) return;
+    await updateAnnotation(projectId, selected.id, { label: newLabel });
     invalidate();
   };
 
   const handleAcceptedToggle = async () => {
-    if (!selected) return;
-    await updateAnnotation(selected.id, { accepted: !selected.accepted });
+    if (!selected || !projectId) return;
+    await updateAnnotation(projectId, selected.id, { accepted: !selected.accepted });
     invalidate();
   };
 
   const handleDelete = async () => {
-    if (!selected) return;
-    await deleteAnnotation(selected.id);
+    if (!selected || !projectId) return;
+    await deleteAnnotation(projectId, selected.id);
     setSelectedAnnotationId(null);
     invalidate();
   };

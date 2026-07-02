@@ -1,0 +1,62 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: annotation
+      POSTGRES_USER: ${POSTGRES_USER:-annotation}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-annotation}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-annotation}:${POSTGRES_PASSWORD}@postgres/annotation
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?NEXTAUTH_SECRET is required}
+      CORS_ORIGIN: ${NEXTAUTH_URL:-http://localhost:3000}
+      IMAGE_STORAGE: ${IMAGE_STORAGE:-local}
+      IMAGES_DIR: /app/images
+      ACTIVE_OCR_ENGINE: ${ACTIVE_OCR_ENGINE:-indic_photo_ocr}
+      OCR_BATCH_SIZE: ${OCR_BATCH_SIZE:-8}
+      ANALYTICS_PROVIDER: ${ANALYTICS_PROVIDER:-internal}
+    volumes:
+      - images_data:/app/images
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NEXT_PUBLIC_API_BASE_URL: ${API_BASE_URL:-http://backend:8000}
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  images_data:

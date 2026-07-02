@@ -5,12 +5,12 @@ type ConfidenceFilter = 'all' | 'green' | 'yellow' | 'red';
 
 interface AnnotationStore {
   // Selected image
-  selectedImageId: number | null;
-  setSelectedImageId: (id: number | null) => void;
+  selectedImageId: string | null;
+  setSelectedImageId: (id: string | null) => void;
 
   // Selected annotation
-  selectedAnnotationId: number | null;
-  setSelectedAnnotationId: (id: number | null) => void;
+  selectedAnnotationId: string | null;
+  setSelectedAnnotationId: (id: string | null) => void;
 
   // Canvas interaction mode
   canvasMode: CanvasMode;

@@ -13,8 +13,8 @@ interface Props {
   imageHeight: number;
   annotations: Annotation[];
   onAnnotationCreate: (data: AnnotationCreate) => void;
-  onAnnotationUpdate: (id: number, x1: number, y1: number, x2: number, y2: number) => void;
-  onAnnotationDelete: (id: number) => void;
+  onAnnotationUpdate: (id: string, x1: number, y1: number, x2: number, y2: number) => void;
+  onAnnotationDelete: (id: string) => void;
   isLocked?: boolean;
 }
 

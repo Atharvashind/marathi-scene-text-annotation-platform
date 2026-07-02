@@ -16,7 +16,7 @@ interface BatchProgress {
   running: boolean;
 }
 
-export default function TopToolbar() {
+export default function TopToolbar({ projectId }: { projectId?: string }) {
   const queryClient = useQueryClient();
   const { selectedImageId, canvasMode, setCanvasMode } = useAnnotationStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -66,11 +66,11 @@ export default function TopToolbar() {
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
-    if (!files.length) return;
+    if (!files.length || !projectId) return;
     try {
-      const results = await uploadImages(files);
+      const results = await uploadImages(projectId, files);
       const failed = results.filter((r) => !r.success);
-      await queryClient.invalidateQueries({ queryKey: ['images'] });
+      await queryClient.invalidateQueries({ queryKey: ['images', projectId] });
       if (failed.length) {
         showToast(`${failed.length} file(s) failed to upload`, 'error');
       } else {
@@ -84,14 +84,13 @@ export default function TopToolbar() {
   };
 
   const handleRunOCR = async () => {
-    if (!selectedImageId) return;
+    if (!selectedImageId || !projectId) return;
     setIsRunningOCR(true);
     try {
-      await runOCR(selectedImageId);
-      await queryClient.invalidateQueries({ queryKey: ['annotations', selectedImageId] });
-      await queryClient.invalidateQueries({ queryKey: ['image', selectedImageId] });
-      await queryClient.invalidateQueries({ queryKey: ['images'] });
-      await queryClient.refetchQueries({ queryKey: ['annotations', selectedImageId] });
+      await runOCR(projectId, selectedImageId);
+      await queryClient.invalidateQueries({ queryKey: ['annotations', projectId, selectedImageId] });
+      await queryClient.invalidateQueries({ queryKey: ['images', projectId] });
+      await queryClient.refetchQueries({ queryKey: ['annotations', projectId, selectedImageId] });
       showToast('OCR completed — annotations loaded', 'success');
     } catch (err) {
       showToast(`OCR failed: ${err}`, 'error');
@@ -101,12 +100,13 @@ export default function TopToolbar() {
   };
 
   const handleRunBatchOCR = async () => {
+    if (!projectId) return;
     try {
-      const res = await runBatchOCR();
+      const res = await runBatchOCR(projectId);
       if (res.queued === 0) {
         showToast('No images pending OCR', 'error');
       } else {
-        showToast(`Batch OCR started for ${res.queued} images — processing in background`, 'success');
+        showToast(`Batch OCR started for ${res.queued} images`, 'success');
       }
     } catch (err) {
       showToast(`Batch OCR failed to start: ${err}`, 'error');
@@ -116,7 +116,7 @@ export default function TopToolbar() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await queryClient.invalidateQueries({ queryKey: ['annotations', selectedImageId] });
+      await queryClient.invalidateQueries({ queryKey: ['annotations', projectId, selectedImageId] });
       showToast('Saved', 'success');
     } finally {
       setIsSaving(false);
@@ -125,9 +125,9 @@ export default function TopToolbar() {
 
   const handleExport = async (format: ExportFormat) => {
     setShowExportMenu(false);
-    if (!selectedImageId) return;
+    if (!selectedImageId || !projectId) return;
     try {
-      await downloadExport(selectedImageId, format);
+      await downloadExport(projectId, selectedImageId, format);
     } catch (err) {
       showToast(`Export failed: ${err}`, 'error');
     }

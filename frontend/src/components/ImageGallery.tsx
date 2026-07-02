@@ -14,15 +14,16 @@ const STATUS_BADGE: Record<AnnotationStatus, { label: string; cls: string }> = {
   Approved: { label: 'Approved', cls: 'bg-green-700 text-green-100' },
 };
 
-export default function ImageGallery() {
+export default function ImageGallery({ projectId }: { projectId?: string }) {
   const { data: images = [], isLoading } = useQuery({
-    queryKey: ['images'],
-    queryFn: fetchImages,
+    queryKey: ['images', projectId],
+    queryFn: () => fetchImages(projectId!),
+    enabled: !!projectId,
   });
 
   const queryClient = useQueryClient();
   const { selectedImageId, setSelectedImageId } = useAnnotationStore();
-  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   // SSE for real-time status updates
@@ -37,19 +38,20 @@ export default function ImageGallery() {
         if (['status_changed', 'ocr_completed', 'image_approved',
              'batch_ocr_progress', 'batch_ocr_finished', 'batch_ocr_image_failed']
             .includes(event.type)) {
-          queryClient.invalidateQueries({ queryKey: ['images'] });
+          queryClient.invalidateQueries({ queryKey: ['images', projectId] });
         }
       } catch { /* ignore */ }
     };
     return () => es.close();
   }, [queryClient]);
 
-  const handleDelete = async (imageId: number) => {
+  const handleDelete = async (imageId: string) => {
+    if (!projectId) return;
     setDeleting(true);
     try {
-      await deleteImage(imageId);
+      await deleteImage(projectId, imageId);
       if (selectedImageId === imageId) setSelectedImageId(null);
-      queryClient.invalidateQueries({ queryKey: ['images'] });
+      queryClient.invalidateQueries({ queryKey: ['images', projectId] });
     } catch (err) {
       alert(`Delete failed: ${err}`);
     } finally {
@@ -96,7 +98,7 @@ export default function ImageGallery() {
                 {/* Thumbnail */}
                 <div className="w-full h-20 bg-gray-800 rounded mb-2 overflow-hidden flex items-center justify-center">
                   <img
-                    src={`${API_BASE}/api/images/${img.id}/thumbnail`}
+                    src={`${API_BASE}/api/images/file/${img.storage_key}`}
                     alt={img.filename}
                     className="object-contain w-full h-full"
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
