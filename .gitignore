@@ -1,13 +1,15 @@
-# Local Python environments
-train_env/
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
 .venv/
 venv/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
+train_env/
+dist/
+*.db
+backend/images/
 
-# Large generated artifacts and datasets
+# Local project artifacts
 Marathi25K/
 marathi25k_lmdb/
 *.ckpt
@@ -19,7 +21,27 @@ marathi25k_lmdb/
 *.tar
 *.tar.gz
 *.log
+check_ocr.py
+check_confidence.py
+check_confidence2.py
+check_confidence3.py
+ocr_output.txt
+detect_output.txt
 
-# OS/editor noise
+# Node
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# Env
+.env.local
+.env
+
+# OS
 .DS_Store
 Thumbs.db
+
+# Local/embedded repos not meant for direct version control
+IndicPhotoOCR/
+
