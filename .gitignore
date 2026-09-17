@@ -1,0 +1,25 @@
+# Local Python environments
+train_env/
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Large generated artifacts and datasets
+Marathi25K/
+marathi25k_lmdb/
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.onnx
+*.zip
+*.tar
+*.tar.gz
+*.log
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
