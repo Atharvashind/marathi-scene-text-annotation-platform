@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAnnotationStore } from '@/store/annotationStore';
-import { uploadImages, runOCR, runBatchOCR, downloadExport } from '@/lib/api';
+import { uploadImages, runOCR, runBatchOCR, runFinetunedOCR, runFinetunedBatchOCR, downloadExport } from '@/lib/api';
 import { API_BASE } from '@/lib/api';
 import type { ExportFormat } from '@/types';
 
@@ -21,6 +21,8 @@ export default function TopToolbar({ projectId }: { projectId?: string }) {
   const { selectedImageId, canvasMode, setCanvasMode } = useAnnotationStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isRunningOCR, setIsRunningOCR] = useState(false);
+  const [isRunningFinetuned, setIsRunningFinetuned] = useState(false);
+  const [isBatchFinetuned, setIsBatchFinetuned] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -52,6 +54,7 @@ export default function TopToolbar({ projectId }: { projectId?: string }) {
           setBatch({ completed: event.completed, failed: event.failed, total: event.total, running: true });
         } else if (event.type === 'batch_ocr_finished') {
           setBatch({ completed: event.completed, failed: event.failed, total: event.total, running: false });
+          setIsBatchFinetuned(false);
           queryClient.invalidateQueries({ queryKey: ['images'] });
           showToast(
             `Batch OCR done — ${event.completed}/${event.total} succeeded${event.failed > 0 ? `, ${event.failed} failed` : ''}`,
@@ -110,6 +113,37 @@ export default function TopToolbar({ projectId }: { projectId?: string }) {
       }
     } catch (err) {
       showToast(`Batch OCR failed to start: ${err}`, 'error');
+    }
+  };
+
+  const handleRunFinetunedOCR = async () => {
+    if (!selectedImageId || !projectId) return;
+    setIsRunningFinetuned(true);
+    try {
+      await runFinetunedOCR(projectId, selectedImageId);
+      await queryClient.invalidateQueries({ queryKey: ['annotations', projectId, selectedImageId] });
+      await queryClient.invalidateQueries({ queryKey: ['images', projectId] });
+      await queryClient.refetchQueries({ queryKey: ['annotations', projectId, selectedImageId] });
+      showToast('Finetuned OCR completed — annotations loaded', 'success');
+    } catch (err) {
+      showToast(`Finetuned OCR failed: ${err}`, 'error');
+    } finally {
+      setIsRunningFinetuned(false);
+    }
+  };
+
+  const handleRunFinetunedBatchOCR = async () => {
+    if (!projectId) return;
+    try {
+      const res = await runFinetunedBatchOCR(projectId);
+      if (res.queued === 0) {
+        showToast('No images pending finetuned OCR', 'error');
+      } else {
+        showToast(`Finetuned batch OCR started for ${res.queued} images`, 'success');
+        setIsBatchFinetuned(true);
+      }
+    } catch (err) {
+      showToast(`Finetuned batch OCR failed to start: ${err}`, 'error');
     }
   };
 
@@ -199,6 +233,28 @@ export default function TopToolbar({ projectId }: { projectId?: string }) {
           title="Run OCR on all uploaded images in background"
         >
           {isBatchRunning ? 'Batch running…' : 'Run OCR All'}
+        </button>
+
+        <div className="w-px h-6 bg-gray-700 mx-1" />
+
+        {/* Run Finetuned OCR (single image) */}
+        <button
+          className={`${btnCls} bg-teal-700 hover:bg-teal-600 text-white`}
+          disabled={noImage || isRunningFinetuned}
+          onClick={handleRunFinetunedOCR}
+          title={noImage ? 'Select an image first' : 'Run our finetuned Marathi model on selected image'}
+        >
+          {isRunningFinetuned ? 'Running…' : 'Run Finetuned OCR'}
+        </button>
+
+        {/* Run Finetuned OCR All */}
+        <button
+          className={`${btnCls} ${isBatchFinetuned ? 'bg-teal-900 text-teal-300' : 'bg-teal-800 hover:bg-teal-700 text-white'}`}
+          disabled={isBatchFinetuned}
+          onClick={handleRunFinetunedBatchOCR}
+          title="Run finetuned OCR on all uploaded images in background"
+        >
+          {isBatchFinetuned ? 'Finetuned running…' : 'Finetuned OCR All'}
         </button>
 
         <div className="w-px h-6 bg-gray-700 mx-1" />

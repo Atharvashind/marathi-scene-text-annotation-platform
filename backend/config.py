@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     MAX_FILE_SIZE_MB: int = 20
     ACTIVE_OCR_ENGINE: str = "indic_photo_ocr"
     OCR_BATCH_SIZE: int = 8
+    # Path to the finetuned TorchScript recogniser (.pt file).
+    # Leave empty to use the default android_agent_bundle/marathi_finetuned_trace.pt.
+    FINETUNED_MODEL_PATH: str = ""
     ANALYTICS_PROVIDER: str = "internal"
 
     @field_validator("DATABASE_URL", "JWT_SECRET", "NEXTAUTH_SECRET", mode="before")
@@ -51,3 +54,4 @@ IMAGES_DIR = settings.IMAGES_DIR
 IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 MAX_FILE_SIZE_MB = settings.MAX_FILE_SIZE_MB
 ACTIVE_OCR_ENGINE = settings.ACTIVE_OCR_ENGINE
+FINETUNED_MODEL_PATH = settings.FINETUNED_MODEL_PATH

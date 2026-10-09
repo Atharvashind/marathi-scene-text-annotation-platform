@@ -42,7 +42,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 // ── Auth ───────────────────────────────────────────────────────────────────────
 
 export async function apiSignup(name: string, email: string, password: string) {
-  const res = await fetch(`${API_BASE}/auth/signup`, {
+  const res = await fetch(`${API_BASE}/api/auth/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ name, email, password }),
@@ -94,6 +94,14 @@ export async function runOCR(projectId: string, imageId: string): Promise<Annota
 
 export async function runBatchOCR(projectId: string): Promise<{ queued: number; message: string }> {
   return request(`/projects/${projectId}/ocr/batch/all`, { method: 'POST' });
+}
+
+export async function runFinetunedOCR(projectId: string, imageId: string): Promise<Annotation[]> {
+  return request<Annotation[]>(`/projects/${projectId}/ocr/finetuned/${imageId}`, { method: 'POST' });
+}
+
+export async function runFinetunedBatchOCR(projectId: string): Promise<{ queued: number; message: string }> {
+  return request(`/projects/${projectId}/ocr/finetuned/batch/all`, { method: 'POST' });
 }
 
 // ── Annotations ────────────────────────────────────────────────────────────────

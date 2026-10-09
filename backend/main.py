@@ -79,24 +79,16 @@ async def health():
 
 # ── Routers ────────────────────────────────────────────────────────────────────
 
-from backend.auth.router import router as auth_router
-from backend.users.router import router as users_router
-from backend.projects.router import router as projects_router
-from backend.images.router import router as images_router
-from backend.annotations.router import router as annotations_router
-from backend.ocr.router import router as ocr_router
-from backend.metrics.router import router as metrics_router
-from backend.export.router import router as export_router
+from backend.routers.images import router as images_router
+from backend.routers.annotations import router as annotations_router
+from backend.routers.ocr import router as ocr_router
+from backend.routers.metrics import router as metrics_router
+from backend.routers.export import router as export_router
 from backend.routers.events import router as events_router
-from backend.analytics.router import router as analytics_router
 
-app.include_router(auth_router)
-app.include_router(users_router)
-app.include_router(projects_router)
 app.include_router(images_router)
 app.include_router(annotations_router)
 app.include_router(ocr_router)
 app.include_router(metrics_router)
 app.include_router(export_router)
 app.include_router(events_router)
-app.include_router(analytics_router)

@@ -12,27 +12,40 @@ from backend.schemas import AnnotationResponse
 OCR_TIMEOUT_SECONDS = 60
 
 
-def get_ocr_adapter() -> BaseOCRAdapter:
-    """Resolve the active OCR adapter from config."""
-    engine = ACTIVE_OCR_ENGINE.lower()
-    if engine == "indic_photo_ocr":
+def get_ocr_adapter(engine: str | None = None) -> BaseOCRAdapter:
+    """Resolve an OCR adapter by engine name.
+
+    Args:
+        engine: One of 'indic_photo_ocr' | 'finetuned'. Defaults to the
+                ACTIVE_OCR_ENGINE config value when None.
+    """
+    resolved = (engine or ACTIVE_OCR_ENGINE).lower()
+    if resolved == "indic_photo_ocr":
         from backend.ocr.indic_photo_ocr import IndicPhotoOCRAdapter
         return IndicPhotoOCRAdapter()
-    elif engine == "easyocr":
+    elif resolved == "finetuned":
+        from backend.ocr.finetuned import FinetuneOCRAdapter
+        return FinetuneOCRAdapter()
+    elif resolved == "easyocr":
         raise NotImplementedError("EasyOCR adapter is not yet implemented")
-    elif engine == "paddleocr":
+    elif resolved == "paddleocr":
         raise NotImplementedError("PaddleOCR adapter is not yet implemented")
     else:
-        raise ValueError(f"Unknown OCR engine: {engine}")
+        raise ValueError(f"Unknown OCR engine: {resolved}")
 
 
-async def run_ocr(image_id: int, db: AsyncSession) -> List[AnnotationResponse]:
+async def run_ocr(
+    image_id: int,
+    db: AsyncSession,
+    engine: str | None = None,
+) -> List[AnnotationResponse]:
     """
     Run OCR on the given image.
     - Validates image status (must be Uploaded or Under_Review)
     - Enforces 60 s timeout
     - Persists annotations and advances image status to OCR_Completed
     - Leaves image status unchanged on any failure
+    - engine: override the default OCR engine ('indic_photo_ocr' | 'finetuned')
     """
     from sqlalchemy import select
     result = await db.execute(select(Image).where(Image.id == image_id))
@@ -47,7 +60,7 @@ async def run_ocr(image_id: int, db: AsyncSession) -> List[AnnotationResponse]:
                    f"Current status: '{image.status}'",
         )
 
-    adapter = get_ocr_adapter()
+    adapter = get_ocr_adapter(engine)
 
     try:
         ocr_results: Sequence[OCRResult] = await asyncio.wait_for(
