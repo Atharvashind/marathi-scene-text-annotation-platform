@@ -1,0 +1,14 @@
+Model Comparison Benchmark
+────────────────────────────────────────────────────────────
+
+Original
+  Marathi25K : 90.94%  CER=2.83%
+  MahaSTR    : 87.20%  CER=3.61%
+
+Marathi25K
+  Marathi25K : 94.96%  CER=1.44%
+  MahaSTR    : 85.53%  CER=4.21%
+
+Combined
+  Marathi25K : 94.54%  CER=1.54%
+  MahaSTR    : 87.38%  CER=3.46%

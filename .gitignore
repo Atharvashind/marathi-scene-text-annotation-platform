@@ -8,10 +8,13 @@ train_env/
 dist/
 *.db
 backend/images/
+app/backend/images/
 
-# Local project artifacts
+# Local project artifacts — datasets and large model files
 Marathi25K/
+MahaSTR/
 marathi25k_lmdb/
+mahastr_lmdb/
 *.ckpt
 *.pt
 *.pth
@@ -21,12 +24,6 @@ marathi25k_lmdb/
 *.tar
 *.tar.gz
 *.log
-check_ocr.py
-check_confidence.py
-check_confidence2.py
-check_confidence3.py
-ocr_output.txt
-detect_output.txt
 
 # Node
 node_modules/
@@ -42,6 +39,9 @@ out/
 .DS_Store
 Thumbs.db
 
-# Local/embedded repos not meant for direct version control
+# External libraries (not our code)
 IndicPhotoOCR/
 
+# Android agent bundle (large binary exports)
+android_agent_bundle/
+android_export/
